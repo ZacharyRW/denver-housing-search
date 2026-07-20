@@ -1,0 +1,28 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.idea/
+
+# Secrets — never commit tokens
+.secrets/
+*.token
+github_token*
+
+# Local scratch
+*.log
+scratch/
+_ovtest.txt
+_sqltest.db
+_*test*
+_runout.log
+
+# Legacy SQLite attempt (storage is now data/db.json) + transient chrome dumps
+data/listings.db
+*.db-journal
+*.db-wal
+*.db-shm
+data/incoming/
+
+# Keep the database and snapshots tracked so trends survive a computer loss.
+# (data/listings.db and data/snapshots/ ARE committed on purpose.)

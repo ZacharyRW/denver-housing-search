@@ -1,0 +1,26 @@
+{
+  "generated_at": "2026-07-20T07:57:39.588270+00:00",
+  "market": [
+    {
+      "run_date": "2026-07-20",
+      "active_count": 359,
+      "eligible_count": 359,
+      "deal_count": 287,
+      "median_price": 1559,
+      "min_price": 899,
+      "avg_price": 1606,
+      "median_2bed": 1836.5,
+      "median_1bed": 1507
+    }
+  ],
+  "run_stats": [
+    {
+      "run_date": "2026-07-20",
+      "source": "craigslist",
+      "found": 359,
+      "kept": 359,
+      "ok": true,
+      "note": ""
+    }
+  ]
+}

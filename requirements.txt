@@ -1,0 +1,10 @@
+# Core scraping + data
+requests>=2.31
+beautifulsoup4>=4.12
+lxml>=5.0
+PyYAML>=6.0
+python-dateutil>=2.9
+
+# Optional: Playwright for JS-heavy sites (unattended). Install browsers with:
+#   python -m playwright install chromium
+playwright>=1.44

@@ -1,0 +1,107 @@
+# =============================================================================
+# Denver Housing Search — configuration
+# Edit this file to change what the daily search looks for.
+# Everything the scrapers, ranking, and dashboard use is driven from here.
+# =============================================================================
+
+search:
+  # Hard budget ceiling. Listings <= this are eligible; anything <= deal_threshold
+  # gets flagged as a "good deal" on the dashboard.
+  max_rent: 2200
+  deal_threshold: 1950        # <= this is highlighted as a strong deal
+
+  # Bedroom / bathroom preferences, best first. The scorer rewards better matches.
+  # Accepted layouts (any of these will be kept):
+  layouts:
+    - { beds: 2, baths: 2, weight: 100 }   # ideal
+    - { beds: 2, baths: 1, weight: 80 }    # good
+    - { beds: 1, baths: 1, weight: 55 }    # acceptable at worst
+  min_beds: 1
+  max_beds: 2
+
+  # Property types, best first. "any" is allowed but scored lower.
+  property_types_preferred:
+    - townhome
+    - duplex
+    - house
+  property_types_allowed:
+    - townhome
+    - duplex
+    - house
+    - condo
+    - apartment
+
+  # Pets: two dogs, both under 50 lbs. Listing must allow dogs.
+  pets:
+    dogs: 2
+    max_weight_lbs: 50
+    require_dog_friendly: true   # drop listings that explicitly say no dogs
+
+# =============================================================================
+# Location & drive-time ranking
+# "Anywhere reasonable" — we keep a wide net and rank by closeness to work.
+# Closer to Sam's Club (work) scores higher. Distances are straight-line miles
+# used as a drive-time proxy (no paid routing API needed).
+# =============================================================================
+location:
+  work:
+    label: "Sam's Club, Lone Tree CO"
+    address: "9101 Westview Rd, Lone Tree, CO 80124"
+    lat: 39.5378
+    lon: -104.8769
+  home:
+    label: "Current home"
+    address: "5656 S Zante Way, Aurora, CO 80015"
+    lat: 39.6072
+    lon: -104.7828
+  # Soft radius (miles) from work. Beyond this, listings are kept but heavily
+  # penalized in score so they sink to the bottom rather than disappear.
+  soft_radius_miles: 20
+  hard_radius_miles: 35        # drop anything past this
+
+  # Search areas fed to site scrapers (cities / zips in the south Denver metro).
+  areas:
+    - "Lone Tree, CO"
+    - "Highlands Ranch, CO"
+    - "Parker, CO"
+    - "Centennial, CO"
+    - "Castle Pines, CO"
+    - "Castle Rock, CO"
+    - "Aurora, CO"
+    - "Englewood, CO"
+    - "Littleton, CO"
+    - "Greenwood Village, CO"
+
+# =============================================================================
+# Sites to scrape. "engine" tells the pipeline how each is fetched:
+#   python  -> unattended Python/Playwright scraper (runs in the cloud task)
+#   chrome  -> scraped via Claude-in-Chrome using your logged-in browser session
+# =============================================================================
+#   Craigslist is the only site that reliably yields to plain Python. Every
+#   other major rental site (Zillow, Apartments.com, HotPads, Trulia, Rent.com)
+#   serves an anti-bot wall to non-browser requests, so they're assigned to the
+#   Claude-in-Chrome engine, which scrapes them through your real logged-in
+#   browser session and drops results into data/incoming/<site>.json.
+sites:
+  craigslist:    { enabled: true,  engine: python }
+  zillow:        { enabled: true,  engine: chrome }   # strong anti-bot -> real browser
+  apartments:    { enabled: true,  engine: chrome }   # anti-bot -> real browser
+  hotpads:       { enabled: true,  engine: chrome }   # anti-bot -> real browser
+  trulia:        { enabled: true,  engine: chrome }   # anti-bot -> real browser
+  rentdotcom:    { enabled: true,  engine: chrome }   # anti-bot -> real browser
+  facebook:      { enabled: true,  engine: chrome }   # needs your logged-in session
+
+# =============================================================================
+# Scoring weights — how listings are ranked on the dashboard (higher = better).
+# =============================================================================
+scoring:
+  weight_layout: 0.35     # bed/bath match
+  weight_price: 0.30      # cheaper vs budget = better
+  weight_distance: 0.25   # closer to work = better
+  weight_type: 0.10       # preferred property type
+
+output:
+  # Where the published dashboard data lives (served by GitHub Pages from /docs).
+  docs_dir: docs
+  data_dir: data
+  keep_snapshots_days: 400

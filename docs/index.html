@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Denver Housing Search — Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#0f1720; --panel:#17212b; --panel2:#1e2b38; --line:#2a3a4a;
+    --ink:#e8eef4; --muted:#93a4b5; --accent:#4cc38a; --accent2:#5aa9f0;
+    --warn:#f0b45a; --deal:#4cc38a; --chip:#243444;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.45 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+       background:var(--bg);color:var(--ink)}
+  header{padding:22px 26px;border-bottom:1px solid var(--line);
+         display:flex;flex-wrap:wrap;gap:14px;align-items:baseline;justify-content:space-between}
+  h1{font-size:20px;margin:0;font-weight:650;letter-spacing:.2px}
+  .sub{color:var(--muted);font-size:13px}
+  main{padding:22px 26px;max-width:1400px;margin:0 auto}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .card .n{font-size:26px;font-weight:700}
+  .card .l{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+  .grid{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;align-items:start}
+  @media(max-width:1000px){.grid{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .panel h2{font-size:14px;margin:0 0 12px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+  .controls{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+  select,input{background:var(--panel2);color:var(--ink);border:1px solid var(--line);
+               border-radius:8px;padding:8px 10px;font-size:13px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600;cursor:pointer;user-select:none;white-space:nowrap}
+  th:hover{color:var(--ink)}
+  tbody tr:hover{background:var(--panel2)}
+  a{color:var(--accent2);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .chip{display:inline-block;background:var(--chip);border-radius:6px;padding:2px 7px;font-size:11px;color:var(--muted)}
+  .deal{background:rgba(76,195,138,.15);color:var(--deal);border:1px solid rgba(76,195,138,.4)}
+  .price{font-weight:700}
+  .down{color:var(--accent)} .up{color:var(--warn)}
+  .src{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted)}
+  .score-bar{height:6px;border-radius:4px;background:var(--panel2);overflow:hidden;min-width:52px}
+  .score-fill{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent))}
+  .muted{color:var(--muted)}
+  footer{padding:18px 26px;color:var(--muted);font-size:12px;border-top:1px solid var(--line)}
+  .status td{background:var(--panel);border:none}
+  .empty{padding:40px;text-align:center;color:var(--muted)}
+  canvas{max-height:220px}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Denver Housing Search</h1>
+    <div class="sub" id="subtitle">Loading…</div>
+  </div>
+  <div class="sub" id="generated"></div>
+</header>
+
+<main>
+  <div class="cards" id="cards"></div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>Listings</h2>
+      <div class="controls">
+        <input id="q" placeholder="Search title / address…" style="flex:1;min-width:160px">
+        <select id="fSource"><option value="">All sources</option></select>
+        <select id="fBeds">
+          <option value="">Any beds</option>
+          <option value="2">2 bed</option>
+          <option value="1">1 bed</option>
+        </select>
+        <select id="fType">
+          <option value="">Any type</option>
+          <option value="townhome">Townhome</option>
+          <option value="duplex">Duplex</option>
+          <option value="house">House</option>
+          <option value="condo">Condo</option>
+          <option value="apartment">Apartment</option>
+        </select>
+        <label class="sub" style="display:flex;align-items:center;gap:6px">
+          <input type="checkbox" id="fDeal"> Deals only
+        </label>
+      </div>
+      <div style="overflow:auto;max-height:70vh">
+        <table id="tbl">
+          <thead><tr>
+            <th data-k="score">Fit ▾</th>
+            <th data-k="price">Rent</th>
+            <th data-k="beds">Bd/Ba</th>
+            <th data-k="property_type">Type</th>
+            <th data-k="distance_mi">mi→work</th>
+            <th data-k="title">Listing</th>
+            <th data-k="source">Src</th>
+            <th data-k="days_on_market">Days</th>
+          </tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel" style="margin-bottom:18px">
+        <h2>Median rent over time</h2>
+        <canvas id="chartPrice"></canvas>
+      </div>
+      <div class="panel" style="margin-bottom:18px">
+        <h2>Inventory &amp; deals over time</h2>
+        <canvas id="chartInv"></canvas>
+      </div>
+      <div class="panel">
+        <h2>Source health (latest run)</h2>
+        <table><tbody id="srcHealth"></tbody></table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  Straight-line distance from Sam's Club, Lone Tree used as a drive-time proxy.
+  Rent shown is monthly. "Fit" blends bed/bath match, price vs budget, distance, and property type.
+  Data self-collected daily; sites may rate-limit or block scraping on some days.
+</footer>
+
+<script>
+let LISTINGS=[], TRENDS=null, sortKey="score", sortDir=-1;
+
+async function load(){
+  try{
+    const [d,t] = await Promise.all([
+      fetch("data.json?"+Date.now()).then(r=>r.json()),
+      fetch("trends.json?"+Date.now()).then(r=>r.json()).catch(()=>null)
+    ]);
+    LISTINGS = d.listings||[];
+    TRENDS = t;
+    document.getElementById("subtitle").textContent =
+      `${d.count} active listings · budget $${d.criteria.max_rent} · deals ≤ $${d.criteria.deal_threshold} · near ${d.criteria.work}`;
+    document.getElementById("generated").textContent =
+      "Updated " + new Date(d.generated_at).toLocaleString();
+    renderCards(d);
+    initFilters();
+    render();
+    renderCharts();
+    renderSrcHealth();
+  }catch(e){
+    document.getElementById("subtitle").textContent =
+      "No data yet — the first daily run hasn't published results.";
+    document.getElementById("rows").innerHTML =
+      `<tr><td colspan="8" class="empty">No data.json found yet. It appears after the first search run.</td></tr>`;
+  }
+}
+
+function renderCards(d){
+  const active=d.listings||[];
+  const prices=active.map(x=>x.price).filter(Boolean).sort((a,b)=>a-b);
+  const med = prices.length? prices[Math.floor(prices.length/2)] : "—";
+  const near = active.filter(x=>x.distance_mi!=null && x.distance_mi<=10).length;
+  const cards=[
+    ["Active",d.count],
+    ["Deals ≤ budget",d.deals],
+    ["Median rent", med==="—"?"—":"$"+med],
+    ["Within 10 mi",near],
+    ["2-bed options",active.filter(x=>x.beds===2).length],
+  ];
+  document.getElementById("cards").innerHTML = cards.map(
+    c=>`<div class="card"><div class="n">${c[1]}</div><div class="l">${c[0]}</div></div>`).join("");
+}
+
+function initFilters(){
+  const srcs=[...new Set(LISTINGS.map(x=>x.source))].sort();
+  document.getElementById("fSource").insertAdjacentHTML("beforeend",
+    srcs.map(s=>`<option value="${s}">${s}</option>`).join(""));
+  ["q","fSource","fBeds","fType","fDeal"].forEach(id=>{
+    document.getElementById(id).addEventListener("input",render);
+  });
+  document.querySelectorAll("th[data-k]").forEach(th=>{
+    th.addEventListener("click",()=>{
+      const k=th.dataset.k;
+      if(sortKey===k) sortDir*=-1; else {sortKey=k; sortDir=(k==="price"||k==="distance_mi")?1:-1;}
+      document.querySelectorAll("th[data-k]").forEach(x=>x.textContent=x.textContent.replace(/[ ▾▴]/g,""));
+      th.textContent += sortDir<0?" ▾":" ▴";
+      render();
+    });
+  });
+}
+
+function render(){
+  const q=document.getElementById("q").value.toLowerCase();
+  const fs=document.getElementById("fSource").value;
+  const fb=document.getElementById("fBeds").value;
+  const ft=document.getElementById("fType").value;
+  const fd=document.getElementById("fDeal").checked;
+  let rows=LISTINGS.filter(x=>{
+    if(fs&&x.source!==fs)return false;
+    if(fb&&String(x.beds)!==fb)return false;
+    if(ft&&x.property_type!==ft)return false;
+    if(fd&&!x.is_deal)return false;
+    if(q){const hay=((x.title||"")+" "+(x.address||"")).toLowerCase();if(!hay.includes(q))return false;}
+    return true;
+  });
+  rows.sort((a,b)=>{
+    let va=a[sortKey],vb=b[sortKey];
+    va=(va==null)?(sortDir<0?-1e9:1e9):va; vb=(vb==null)?(sortDir<0?-1e9:1e9):vb;
+    if(typeof va==="string")return sortDir*va.localeCompare(vb);
+    return sortDir*(va-vb);
+  });
+  const body=document.getElementById("rows");
+  if(!rows.length){body.innerHTML=`<tr><td colspan="8" class="empty">No listings match these filters.</td></tr>`;return;}
+  body.innerHTML=rows.map(r=>{
+    const score=Math.round(r.score||0);
+    const bd = (r.beds!=null?r.beds:"?")+"/"+(r.baths!=null?r.baths:"?");
+    const dist = r.distance_mi!=null? r.distance_mi.toFixed(1) : "—";
+    let trend="";
+    if(r.price_changed && r.price_history && r.price_history.length>1){
+      const first=r.price_history[0].price, last=r.price_history[r.price_history.length-1].price;
+      trend = last<first? `<span class="down">↓$${first-last}</span>` : `<span class="up">↑$${last-first}</span>`;
+    }
+    const title = r.url? `<a href="${r.url}" target="_blank" rel="noopener">${esc(r.title||"(view)")}</a>` : esc(r.title||"");
+    return `<tr>
+      <td><div class="score-bar"><div class="score-fill" style="width:${score}%"></div></div>
+          <span class="muted">${score}</span></td>
+      <td class="price">${r.price?("$"+r.price):"—"} ${r.is_deal?'<span class="chip deal">deal</span>':''} ${trend}</td>
+      <td>${bd}</td>
+      <td>${r.property_type||'<span class="muted">—</span>'}</td>
+      <td>${dist}</td>
+      <td>${title}<div class="muted">${esc(r.address||r.city||"")}</div></td>
+      <td class="src">${r.source}</td>
+      <td>${r.days_on_market||0}</td>
+    </tr>`;
+  }).join("");
+}
+
+function renderCharts(){
+  if(!TRENDS||!TRENDS.market||!TRENDS.market.length)return;
+  const m=TRENDS.market;
+  const labels=m.map(x=>x.run_date);
+  new Chart(document.getElementById("chartPrice"),{
+    type:"line",
+    data:{labels,datasets:[
+      {label:"Median",data:m.map(x=>x.median_price),borderColor:"#5aa9f0",tension:.3},
+      {label:"2-bed median",data:m.map(x=>x.median_2bed),borderColor:"#4cc38a",tension:.3},
+    ]},
+    options:chartOpts("$")
+  });
+  new Chart(document.getElementById("chartInv"),{
+    type:"line",
+    data:{labels,datasets:[
+      {label:"Active",data:m.map(x=>x.active_count),borderColor:"#93a4b5",tension:.3},
+      {label:"Deals",data:m.map(x=>x.deal_count),borderColor:"#f0b45a",tension:.3},
+    ]},
+    options:chartOpts("")
+  });
+}
+
+function chartOpts(prefix){
+  return {responsive:true,plugins:{legend:{labels:{color:"#93a4b5",boxWidth:12}}},
+    scales:{x:{ticks:{color:"#6d8296"},grid:{color:"#22303d"}},
+            y:{ticks:{color:"#6d8296",callback:v=>prefix+v},grid:{color:"#22303d"}}}};
+}
+
+function renderSrcHealth(){
+  if(!TRENDS||!TRENDS.run_stats){return;}
+  const latest={};
+  TRENDS.run_stats.forEach(r=>{ if(!latest[r.source]) latest[r.source]=r; });
+  document.getElementById("srcHealth").innerHTML=Object.values(latest).map(r=>
+    `<tr><td class="src">${r.source}</td>
+     <td>${r.ok?'<span class="chip deal">ok</span>':'<span class="chip" style="color:#f0b45a">blocked</span>'}</td>
+     <td>${r.kept} kept</td>
+     <td class="muted" style="font-size:11px">${esc((r.note||"").slice(0,40))}</td></tr>`).join("");
+}
+
+function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+load();
+</script>
+</body>
+</html>
