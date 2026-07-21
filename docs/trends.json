@@ -1,26 +1,74 @@
 {
-  "generated_at": "2026-07-20T07:57:39.588270+00:00",
+  "generated_at": "2026-07-21T03:22:16.819265+00:00",
   "market": [
     {
       "run_date": "2026-07-20",
-      "active_count": 359,
-      "eligible_count": 359,
-      "deal_count": 287,
-      "median_price": 1559,
-      "min_price": 899,
-      "avg_price": 1606,
-      "median_2bed": 1836.5,
-      "median_1bed": 1507
+      "active_count": 524,
+      "eligible_count": 524,
+      "deal_count": 383,
+      "median_price": 1658.0,
+      "min_price": 799,
+      "avg_price": 1694,
+      "median_2bed": 1880.0,
+      "median_1bed": 1534.0
     }
   ],
   "run_stats": [
     {
       "run_date": "2026-07-20",
       "source": "craigslist",
-      "found": 359,
-      "kept": 359,
+      "found": 360,
+      "kept": 350,
       "ok": true,
       "note": ""
+    },
+    {
+      "run_date": "2026-07-20",
+      "source": "apartments",
+      "found": 70,
+      "kept": 70,
+      "ok": true,
+      "note": "chrome ingest"
+    },
+    {
+      "run_date": "2026-07-20",
+      "source": "facebook",
+      "found": 16,
+      "kept": 16,
+      "ok": true,
+      "note": "chrome ingest"
+    },
+    {
+      "run_date": "2026-07-20",
+      "source": "hotpads",
+      "found": 34,
+      "kept": 34,
+      "ok": true,
+      "note": "chrome ingest"
+    },
+    {
+      "run_date": "2026-07-20",
+      "source": "rentdotcom",
+      "found": 55,
+      "kept": 55,
+      "ok": true,
+      "note": "chrome ingest"
+    },
+    {
+      "run_date": "2026-07-20",
+      "source": "trulia",
+      "found": 30,
+      "kept": 30,
+      "ok": true,
+      "note": "chrome ingest"
+    },
+    {
+      "run_date": "2026-07-20",
+      "source": "zillow",
+      "found": 45,
+      "kept": 45,
+      "ok": true,
+      "note": "chrome ingest"
     }
   ]
 }
