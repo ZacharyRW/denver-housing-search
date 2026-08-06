@@ -7,4 +7,4 @@ python-dateutil>=2.9
 
 # Optional: Playwright for JS-heavy sites (unattended). Install browsers with:
 #   python -m playwright install chromium
-playwright>=1.44
+playwright>=1.62.0
