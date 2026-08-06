@@ -1,0 +1,15 @@
+version: 2
+updates:
+  # requests / lxml / playwright — the scraping stack, and the main CVE surface.
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 2
+
+  # Actions used by .github/workflows/smoke.yml.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2
