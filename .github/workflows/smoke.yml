@@ -1,0 +1,43 @@
+name: smoke
+
+# No test suite in this repo yet. This exists so Dependabot PRs get validated:
+# it proves the pinned dependencies still install and every scraper module
+# still imports against them.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Byte-compile all sources
+        run: python -m compileall -q scraper
+
+      - name: Import every scraper module
+        # Catches removed/renamed APIs in requests, lxml, bs4 and playwright
+        # that only surface at import time.
+        run: |
+          python - <<'PY'
+          import importlib, pkgutil
+          import scraper
+
+          for mod in pkgutil.walk_packages(scraper.__path__, "scraper."):
+              importlib.import_module(mod.name)
+              print("ok", mod.name)
+          PY
+
+      - name: Load config
+        run: python -c "from scraper.common import load_config; load_config(); print('config ok')"
