@@ -3,7 +3,7 @@ requests>=2.34.2
 beautifulsoup4>=4.12
 lxml>=6.1.1
 PyYAML>=6.0.3
-python-dateutil>=2.9
+python-dateutil>=2.9.0.post0
 
 # Optional: Playwright for JS-heavy sites (unattended). Install browsers with:
 #   python -m playwright install chromium
