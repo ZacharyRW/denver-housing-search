@@ -1,7 +1,7 @@
 # Core scraping + data
 requests>=2.34.2
 beautifulsoup4>=4.15.0
-lxml>=6.1.1
+lxml>=6.1.2
 PyYAML>=6.0.3
 python-dateutil>=2.9.0.post0
 
